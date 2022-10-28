@@ -82,6 +82,16 @@ def make_sequences(sentences: List[str],
     print(f'Num total sequences={len(res):,}', flush=True)
     return res
 
+def get_perplexity(model, tokenizer, sentence):
+    tensor_input = tokenizer.encode(sentence, return_tensors='pt')
+    repeat_input = tensor_input.repeat(tensor_input.size(-1)-2, 1)
+    mask = torch.ones(tensor_input.size(-1) - 1).diag(1)[:-2]
+    masked_input = repeat_input.masked_fill(mask == 1, tokenizer.mask_token_id)
+    labels = repeat_input.masked_fill(masked_input != tokenizer.mask_token_id, -100)
+    with torch.inference_mode():
+        loss = model(masked_input.cuda(), labels=labels.cuda()).loss
+    return np.exp(loss.item())
+
 from datasets import Dataset, DatasetDict
 
 from transformers.models.roberta import RobertaConfig, RobertaForMaskedLM, RobertaTokenizerFast
@@ -97,13 +107,13 @@ def main():
     training_args = TrainingArguments(
         report_to=None,
         output_dir=str(path_out),
-        overwrite_output_dir=False,
+        overwrite_output_dir=True,
         do_train=True,
         do_eval=False,
         do_predict=False,
-        per_device_train_batch_size=16,
+        per_device_train_batch_size=64,
         learning_rate=1e-4,
-        max_steps=160_000,
+        num_train_epochs=1,
         warmup_steps=24_000,
         seed=rep,
         save_steps=40_000
@@ -129,10 +139,6 @@ def main():
     # https://huggingface.co/docs/datasets/loading_datasets.html.
 
     logger.info("Loading tokenizer")
-    # tokenizer = RobertaTokenizerFast(vocab_file=None,
-    #                                  merges_file=None,
-    #                                  tokenizer_file=str('/scratch/aditya/babyberta.json'),)
-    # 
     tokenizer = ByteLevelBPETokenizer()
     tokenizer.train(files="oscar.eo.txt", vocab_size=52_000, min_frequency=2, special_tokens=[
     "<s>",
@@ -202,6 +208,8 @@ def main():
     trainer.train()
     trainer.save_model()  # Saves the tokenizer too
 
+    print(get_perplexity(sentence='London is the capital of Great Britain.', model=model, tokenizer=tokenizer)) 
+    print(get_perplexity(sentence='London is the capital of South America.', model=model, tokenizer=tokenizer))
 
 if __name__ == "__main__":
     main()
