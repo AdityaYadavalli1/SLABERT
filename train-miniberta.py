@@ -14,7 +14,7 @@ from transformers import AutoTokenizer, AutoModelForMaskedLM, AutoModel
 logging.basicConfig(level=logging.ERROR)
 from tokenizers import ByteLevelBPETokenizer
 from tokenizers.processors import BertProcessing
-
+import wandb
 from torch import cuda
 device = 'cuda' if cuda.is_available() else 'cpu'
 
@@ -22,6 +22,8 @@ from pathlib import Path
 from typing import List, Dict, Any, Tuple
 import yaml
 import random
+
+wandb.init(project="cds", entity="adityay")
 
 def load_sentences_from_file(file_path: Path,
                              include_punctuation: bool = True,
@@ -129,7 +131,7 @@ def main():
         do_train=True,
         do_eval=False,
         do_predict=False,
-        per_device_train_batch_size=64,
+        per_device_train_batch_size=16,
         learning_rate=1e-4,
         num_train_epochs=1,
         warmup_steps=24_000,
@@ -146,7 +148,7 @@ def main():
     set_seed(rep)
 
     logger.info("Loading data")
-    data_path = 'oscar.eo.txt'  # we use aonewsela for reference implementation
+    data_path = 'oscar.eo.txt-full'  # we use aonewsela for reference implementation
     sentences = load_sentences_from_file(data_path,
                                          include_punctuation=True,
                                          allow_discard=True)
@@ -158,7 +160,7 @@ def main():
 
     logger.info("Loading tokenizer")
     tokenizer = ByteLevelBPETokenizer()
-    tokenizer.train(files="oscar.eo.txt", vocab_size=52_000, min_frequency=2, special_tokens=[
+    tokenizer.train(files="oscar.eo.txt-full", vocab_size=52_000, min_frequency=2, special_tokens=[
     "<s>",
     "<pad>",
     "</s>",
@@ -227,11 +229,11 @@ def main():
 
     print(get_perplexity(sentence='London is the capital of Great Britain.', model=model, tokenizer=tokenizer))
     print(get_perplexity(sentence='London is the capital of South America.', model=model, tokenizer=tokenizer))
-    path = "tests/wh_vs_that_with_gap_long_distance.jsonl"
+    # path = "tests/wh_vs_that_with_gap_long_distance.jsonl"
     paths = glob.glob("tests/*.jsonl")
     for path in paths:
         acc = get_scores_on_paradigm(model, tokenizer, path)
-    print(path + " " + str(acc*100))
+        print(path + " " + str(acc*100))
 
 if __name__ == "__main__":
     main()
