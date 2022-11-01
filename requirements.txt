@@ -1,0 +1,89 @@
+aiohttp==3.8.3
+aiosignal==1.2.0
+appdirs==1.4.4
+async-timeout==4.0.2
+attrs==22.1.0
+black==19.10b0
+brotlipy==0.7.0
+certifi==2021.10.8
+cffi @ file:///opt/conda/conda-bld/cffi_1642701102775/work
+cfgv==3.3.1
+charset-normalizer @ file:///tmp/build/80754af9/charset-normalizer_1630003229654/work
+click==8.0.4
+colorama @ file:///tmp/build/80754af9/colorama_1607707115595/work
+conda==4.12.0
+conda-content-trust @ file:///tmp/build/80754af9/conda-content-trust_1617045594566/work
+conda-package-handling @ file:///tmp/build/80754af9/conda-package-handling_1649105784853/work
+contourpy==1.0.5
+cryptography @ file:///tmp/build/80754af9/cryptography_1639414572950/work
+cycler==0.11.0
+datasets==2.6.1
+dill==0.3.5.1
+distlib==0.3.6
+entrypoints==0.3
+filelock==3.8.0
+flake8==3.7.9
+fonttools==4.38.0
+frozenlist==1.3.1
+fsspec==2022.10.0
+huggingface-hub==0.10.1
+HyperPyYAML==1.0.1
+identify==2.5.6
+idna @ file:///tmp/build/80754af9/idna_1637925883363/work
+joblib==1.2.0
+kiwisolver==1.4.4
+matplotlib==3.6.0
+mccabe==0.6.1
+more-itertools==8.14.0
+multidict==6.0.2
+multiprocess==0.70.13
+nodeenv==1.7.0
+numpy==1.23.4
+packaging==21.3
+pandas==1.5.1
+pathspec==0.10.1
+Pillow==9.2.0
+platformdirs==2.5.2
+pluggy==0.13.1
+pre-commit==2.20.0
+py==1.11.0
+pyarrow==6.0.1
+pycodestyle==2.5.0
+pycosat==0.6.3
+pycparser @ file:///tmp/build/80754af9/pycparser_1636541352034/work
+pyflakes==2.1.1
+pyOpenSSL @ file:///opt/conda/conda-bld/pyopenssl_1643788558760/work
+pyparsing==3.0.9
+PySocks @ file:///tmp/build/80754af9/pysocks_1605305812635/work
+pytest==5.4.1
+python-dateutil==2.8.2
+pytz==2022.5
+PyYAML==6.0
+regex==2022.9.13
+requests @ file:///opt/conda/conda-bld/requests_1641824580448/work
+responses==0.18.0
+ruamel-yaml-conda @ file:///tmp/build/80754af9/ruamel_yaml_1616016711199/work
+ruamel.yaml==0.17.21
+ruamel.yaml.clib==0.2.6
+scikit-learn==1.1.3
+scipy==1.9.3
+seaborn==0.12.1
+sentencepiece==0.1.97
+six @ file:///tmp/build/80754af9/six_1644875935023/work
+-e git+https://github.com/speechbrain/speechbrain.git@64c8fa951bdade7e28c81b37452331c61af7b548#egg=speechbrain
+threadpoolctl==3.1.0
+tokenizers==0.13.1
+toml==0.10.2
+torch==1.12.1
+torchaudio==0.12.1
+torchvision==0.13.1
+tqdm @ file:///opt/conda/conda-bld/tqdm_1647339053476/work
+transformers @ git+https://github.com/huggingface/transformers@fdffee8a601d0408c7e0f57fbb56217f8b57e62a
+typed-ast==1.5.4
+typing_extensions==4.4.0
+urllib3 @ file:///opt/conda/conda-bld/urllib3_1643638302206/work
+virtualenv==20.16.5
+wcwidth==0.2.5
+xxhash==3.1.0
+yamllint==1.23.0
+yarl==1.8.1

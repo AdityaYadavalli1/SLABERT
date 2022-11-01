@@ -5,6 +5,7 @@ import torch
 import seaborn as sns
 import transformers
 import json
+import glob
 from tqdm import tqdm
 from torch.utils.data import Dataset, DataLoader
 from transformers import RobertaModel, RobertaTokenizer
@@ -96,6 +97,23 @@ from datasets import Dataset, DatasetDict
 
 from transformers.models.roberta import RobertaConfig, RobertaForMaskedLM, RobertaTokenizerFast
 from transformers import DataCollatorForLanguageModeling, Trainer, set_seed, TrainingArguments
+
+def get_scores_on_paradigm(model, tokenizer, file_path):
+    with open(file_path) as f:
+        data = list(f)
+    
+    acc = 0
+    for item in data:
+        line = json.loads(item)
+        good = line["sentence_good"]
+        bad = line["sentence_bad"]
+        good_score = get_perplexity(sentence=good, model=model, tokenizer=tokenizer)
+        bad_score = get_perplexity(sentence=bad, model=model, tokenizer=tokenizer)
+        if bad_score >= good_score:
+            acc += 1
+    
+    acc = acc / len(data)
+    return acc
 
 def main():
 
@@ -203,13 +221,17 @@ def main():
         tokenizer=tokenizer,
         data_collator=data_collator,
     )
-
     # Training
     trainer.train()
     trainer.save_model()  # Saves the tokenizer too
 
-    print(get_perplexity(sentence='London is the capital of Great Britain.', model=model, tokenizer=tokenizer)) 
+    print(get_perplexity(sentence='London is the capital of Great Britain.', model=model, tokenizer=tokenizer))
     print(get_perplexity(sentence='London is the capital of South America.', model=model, tokenizer=tokenizer))
+    path = "tests/wh_vs_that_with_gap_long_distance.jsonl"
+    paths = glob.glob("tests/*.jsonl")
+    for path in paths:
+        acc = get_scores_on_paradigm(model, tokenizer, path)
+    print(path + " " + str(acc*100))
 
 if __name__ == "__main__":
     main()
