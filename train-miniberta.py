@@ -133,7 +133,7 @@ def main():
         do_predict=False,
         per_device_train_batch_size=16,
         learning_rate=1e-4,
-        num_train_epochs=1,
+        max_steps=160_000,
         warmup_steps=24_000,
         seed=rep,
         save_steps=40_000
@@ -148,7 +148,7 @@ def main():
     set_seed(rep)
 
     logger.info("Loading data")
-    data_path = 'oscar.eo.txt-full'  # we use aonewsela for reference implementation
+    data_path = 'text_spok.txt'  # we use aonewsela for reference implementation
     sentences = load_sentences_from_file(data_path,
                                          include_punctuation=True,
                                          allow_discard=True)
@@ -160,7 +160,7 @@ def main():
 
     logger.info("Loading tokenizer")
     tokenizer = ByteLevelBPETokenizer()
-    tokenizer.train(files="oscar.eo.txt-full", vocab_size=52_000, min_frequency=2, special_tokens=[
+    tokenizer.train(files="text_spok.txt", vocab_size=52_000, min_frequency=2, special_tokens=[
     "<s>",
     "<pad>",
     "</s>",
