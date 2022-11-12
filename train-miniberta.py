@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import List, Dict, Any, Tuple
 import yaml
 import random
+import argparse
 
 wandb.init(project="cds", entity="adityay")
 
@@ -117,7 +118,123 @@ def get_scores_on_paradigm(model, tokenizer, file_path):
     acc = acc / len(data)
     return acc
 
-def main():
+def freeze(model):
+    print("Freezing all parameters except embeddings")
+    for name, param in model.named_parameters():
+        if not name.startswith("roberta.embeddings"):
+            param.requires_grad = False
+    
+    return model
+
+def finetune(model, ads_path):
+    rep = 0
+    path_out = '/scratch/pbsjobs/axy327/finetune' + str(rep)
+
+    print(f'replication={rep}')
+
+    training_args = TrainingArguments(
+        report_to=None,
+        output_dir=str(path_out),
+        overwrite_output_dir=True,
+        do_train=True,
+        do_eval=False,
+        do_predict=False,
+        per_device_train_batch_size=16,
+        learning_rate=1e-4,
+        max_steps=160_000,
+        warmup_steps=24_000,
+        seed=rep,
+        save_steps=40_000
+    )
+
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(
+        format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
+        datefmt="%m/%d/%Y %H:%M:%S",
+    )
+    logger.setLevel(logging.INFO)
+    set_seed(rep)
+
+    logger.info("Loading data")
+    data_path = ads_path
+    sentences = load_sentences_from_file(data_path,
+                                         include_punctuation=True,
+                                         allow_discard=True)
+    data_in_dict = {'text': make_sequences(sentences, 1)}
+    datasets = DatasetDict({'train': Dataset.from_dict(data_in_dict)})
+    print(datasets['train'])
+    # See more about loading any type of standard or custom dataset (from files, python dict, pandas DataFrame, etc) at
+    # https://huggingface.co/docs/datasets/loading_datasets.html.
+
+    logger.info("Loading tokenizer")
+    tokenizer = ByteLevelBPETokenizer()
+    tokenizer.train(files="text_spok.txt", vocab_size=52_000, min_frequency=2, special_tokens=[
+    "<s>",
+    "<pad>",
+    "</s>",
+    "<unk>",
+    "<mask>",
+    ])
+    tokenizer.save_model("Babyberta")
+    tokenizer.save("byte-level-BPE.tokenizer.json")
+    tokenizer = RobertaTokenizerFast(vocab_file=None,
+                                     merges_file=None,
+                                     tokenizer_file=str('byte-level-BPE.tokenizer.json')
+    )
+    logger.info("Finetuning Roberta")
+    # Preprocessing the datasets.
+    # First we tokenize all the texts.
+    text_column_name = "text"
+
+    def tokenize_function(examples):
+        # Remove empty lines
+        examples["text"] = [line for line in examples["text"] if len(line) > 0 and not line.isspace()]
+        return tokenizer(
+            examples["text"],
+            padding=True,
+            truncation=True,
+            max_length=128,
+            # We use this option because DataCollatorForLanguageModeling (see below) is more efficient when it
+            # receives the `special_tokens_mask`.
+            return_special_tokens_mask=True,
+        )
+    logger.info("Tokenising data")
+    tokenized_datasets = datasets.map(
+        tokenize_function,
+        batched=True,
+        num_proc=4,
+        remove_columns=[text_column_name],
+        load_from_cache_file=True,
+    )
+    
+    train_dataset = tokenized_datasets["train"]
+    print(f'Length of train data={len(train_dataset)}')
+
+    # Data collator will take care of randomly masking the tokens.
+    data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer,
+                                                    mlm_probability=0.15)
+
+    # Initialize our Trainer
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=train_dataset,
+        eval_dataset=None,
+        tokenizer=tokenizer,
+        data_collator=data_collator,
+    )
+    # Training
+    trainer.train()
+    trainer.save_model()  # Saves the tokenizer too
+    return model, tokenizer
+
+def main(ads_path, cds_path, if_freeze):
+    if if_freeze == "False":
+        first_path = ads_path
+        second_path = "" # not needed
+    else:
+        first_path = cds_path
+        second_path = ads_path
 
     rep = 0
     path_out = '/scratch/pbsjobs/axy327/' + str(rep)
@@ -148,7 +265,7 @@ def main():
     set_seed(rep)
 
     logger.info("Loading data")
-    data_path = 'text_spok.txt'  # we use aonewsela for reference implementation
+    data_path = first_path  # we use aonewsela for reference implementation
     sentences = load_sentences_from_file(data_path,
                                          include_punctuation=True,
                                          allow_discard=True)
@@ -226,6 +343,9 @@ def main():
     # Training
     trainer.train()
     trainer.save_model()  # Saves the tokenizer too
+    if if_freeze == "True":
+        model = freeze(model)
+        model, tokenizer = finetune(model, second_path)
 
     print(get_perplexity(sentence='London is the capital of Great Britain.', model=model, tokenizer=tokenizer))
     print(get_perplexity(sentence='London is the capital of South America.', model=model, tokenizer=tokenizer))
@@ -236,4 +356,10 @@ def main():
         print(path + " " + str(acc*100))
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="script to train mini roberta model")
+    parser.add_argument("--ads_path", required=True, help="path to the ADS file")
+    parser.add_argument("--freeze", required=True, help="should I freeze the network?")
+    parser.add_argument("--cds_path", help="path to the CDS file")
+
+    args = parser.parse_args()
+    main(args.ads_path, args.cds_path, args.freeze)
