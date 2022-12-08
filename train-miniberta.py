@@ -168,7 +168,7 @@ def finetune(model, ads_path):
 
     logger.info("Loading tokenizer")
     tokenizer = ByteLevelBPETokenizer()
-    tokenizer.train(files="text_spok.txt", vocab_size=52_000, min_frequency=2, special_tokens=[
+    tokenizer.train(files=ads_path, vocab_size=52_000, min_frequency=2, special_tokens=[
     "<s>",
     "<pad>",
     "</s>",
@@ -277,7 +277,7 @@ def main(ads_path, cds_path, if_freeze):
 
     logger.info("Loading tokenizer")
     tokenizer = ByteLevelBPETokenizer()
-    tokenizer.train(files="text_spok.txt", vocab_size=52_000, min_frequency=2, special_tokens=[
+    tokenizer.train(files=first_path, vocab_size=52_000, min_frequency=2, special_tokens=[
     "<s>",
     "<pad>",
     "</s>",
