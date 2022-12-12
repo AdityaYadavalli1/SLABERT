@@ -128,7 +128,7 @@ def freeze(model):
 
 def finetune(model, ads_path):
     rep = 0
-    path_out = '/scratch/pbsjobs/axy327/finetune' + str(rep)
+    path_out = '/scratch/pbsjobs/axy327/finetune/' + str(rep)
 
     print(f'replication={rep}')
 
@@ -168,7 +168,7 @@ def finetune(model, ads_path):
 
     logger.info("Loading tokenizer")
     tokenizer = ByteLevelBPETokenizer()
-    tokenizer.train(files=ads_path, vocab_size=52_000, min_frequency=2, special_tokens=[
+    tokenizer.train(files=ads_path, vocab_size=8000, min_frequency=2, special_tokens=[
     "<s>",
     "<pad>",
     "</s>",
@@ -277,7 +277,7 @@ def main(ads_path, cds_path, if_freeze):
 
     logger.info("Loading tokenizer")
     tokenizer = ByteLevelBPETokenizer()
-    tokenizer.train(files=first_path, vocab_size=52_000, min_frequency=2, special_tokens=[
+    tokenizer.train(files=first_path, vocab_size=8000, min_frequency=2, special_tokens=[
     "<s>",
     "<pad>",
     "</s>",
@@ -291,7 +291,7 @@ def main(ads_path, cds_path, if_freeze):
                                      tokenizer_file=str('byte-level-BPE.tokenizer.json')
     )
     logger.info("Initialising Roberta from scratch")
-    config = RobertaConfig(vocab_size=52_000,
+    config = RobertaConfig(vocab_size=8000,
                            hidden_size=256,
                            num_hidden_layers=8,
                            num_attention_heads=8,
